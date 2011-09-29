@@ -1,0 +1,37 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+  "http://www.w3.org/TR/html4/strict.dtd">
+
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>Push-It Debug</title>
+	<meta name="author" content="Aaron Blohowiak">
+	
+	<link rel="stylesheet" type="text/css" href="style.css">
+	
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+  <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js"></script>
+
+  <script src="/lib/sockjs.min.js" type="text/javascript" charset="utf-8"></script>
+  <script src="/lib/push-it.js" type="text/javascript" charset="utf-8"></script>
+  
+  <script src="/scripts.js" type="text/javascript" charset="utf-8"></script>  
+</head>
+<body>
+
+  <div id="content">
+  
+    <ul id="wall">
+      <!-- public cards go here -->
+    </ul>
+    
+    <a id="newCard" href="#">+</a> Cards below are private; Cards above are public. Drag cards from below to above to share. (<a href="#" id="reconnect">reconnect</a>)
+    
+    <ul id="hand">
+      <!-- private cards go here -->
+    </ul>
+  
+  </div>
+  
+</body>
+</html>

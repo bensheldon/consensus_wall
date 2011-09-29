@@ -1,0 +1,69 @@
+body {
+  background: #ddd;
+
+}
+
+#content {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+ul#wall {
+  position: relative;
+  height: 500px;
+  border:  1px solid #000;
+  z-index: 0;
+  margin: 0;
+  padding: 0;
+  padding: 0;
+  background: #fff;
+
+}
+
+ul#wall.hovered {
+  background-color: #f8e6e6;
+}
+
+ul#hand {
+  height: 125px;
+  border: 1px solid #000;
+  padding: 10px 5px;
+  margin: 0;
+  overflow-x: auto; 
+  overflow-y: hidden;
+  background: #fff;
+}
+
+li.card {
+  display: inline;
+  list-style: none;
+  background-color: #d8effe;
+  width: 200px;
+  text-align: center;
+  border-radius: 2px;
+  border: 1px solid #96d3fb;
+  position: absolute;
+  margin: 0;
+  padding: 0;
+}
+
+li.card textarea {
+  height: 50px;
+  width: 180px;
+  border-radius: 4px;
+  border: 1px solid #96d3fb;
+  white-space: normal;
+  font-size: 1.4em;
+  padding: 4px;
+  text-align: center;
+  resize: none;
+  margin: 20px auto 2px; 
+  overflow: hidden;
+
+}
+
+#hand li.card {
+    float: left;
+    margin: 0 5px;
+    position: relative;
+}
