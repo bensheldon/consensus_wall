@@ -129,7 +129,7 @@
 		},
 
     UUID: function(len, radix) {
-      var BASE64CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split(''); 
+      var BASE64CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_'.split(''); 
       var chars = BASE64CHARS, uuid = [], i=0;
       radix = radix || chars.length;
       len = len || 22;
