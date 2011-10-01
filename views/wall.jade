@@ -1,0 +1,25 @@
+!!! 5
+html
+  head
+    // CSS: implied media="all"
+    link(href="/css/style.css", media="all", rel="stylesheet" )/
+
+  body
+    div#content
+      p #{"Wall ID: " + wall.id}
+  
+        ul#wall
+          if wall.cards.length > 0
+            each card in wall.cards
+              li(id= card.id, class= "card", style= "top:"+card.position.top+"px; left: "+card.position.left+"px;")
+                textarea= card.text
+        
+        ul#hand
+
+
+    // Scripts at the bottom
+    script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" )
+    script(src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js" )
+    script(src="/js/lib/push-it.js" )
+    script(src="/js/lib/sockjs.min.js" )
+    script(src="/js/scripts.js" )
