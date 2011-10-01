@@ -1,5 +1,13 @@
 $(function() {
-  var channel = '/wall/alpha';
+	
+	//assuming a single wall
+	var wall = $("ul.wall").attr('id'); // #wall-{ID}
+	var wallId = wall.split("-")[1];
+	wall = "ul#" + wall; // for retrieving the element
+  var channel = "/wall/" + wallId;
+  
+  console.log(channel);
+  
   var successful = [];
   var connectionOptions = {
   	channels: [channel],
@@ -37,7 +45,7 @@ $(function() {
   }
   
   function syncSend() {
-		$('#wall li.card').each(function() {
+		$(wall + ' li.card').each(function() {
 			var card = $(this);
 			sendMessage({
 				action: 'updateCard',
@@ -56,7 +64,7 @@ $(function() {
   	      console.log('Connected to channel');
   	      $(function() {
   	        sendMessage({action: 'sync'});
-  	        syncSend();
+  	        //syncSend();
   	      });
   	      break;
   	    
@@ -114,14 +122,14 @@ $(function() {
     this.init = function() {
       var that = this;
       // set up the drop point
-      $('ul#wall').droppable({
+      $(wall).droppable({
         accept: 'li.card',
         hoverClass: 'hovered',
         drop: this.repositionCard
       });
       
       // make any existing cards draggable
-      $("ul#wall li.card")
+      $(wall + " li.card")
         .draggable( {
               containment: '#wall',
               helper: 'clone',
@@ -131,7 +139,7 @@ $(function() {
               stop: this.draggableStop
         });   
       
-      $('#wall').delegate('li textarea', 'keyup', function() {
+      $(wall).delegate('li textarea', 'keyup', function() {
          var card = $(this).parent();
          sendMessage({
            action: 'updateText',
@@ -167,7 +175,7 @@ $(function() {
         .prependTo('ul#hand')
         .draggable( {
               containment: '#content',
-              appendTo: 'ul#wall',
+              appendTo: wall,
               helper: 'clone',
               cursor: 'move',
               revert: true,
@@ -219,20 +227,23 @@ $(function() {
      */
     this.repositionCard = function(event, ui) {
       var card = $(ui.draggable);
-      var action = 'repositionCard'
+      var action = 'repositionCard';
+      console.log(wall);
+
       
-      // if not on the #wall, must add it
-      if (card.parent().attr('id') != 'wall') {
+      
+      // if not on a .wall, must add it
+      if (!(card.parent().hasClass("wall"))) {
         action = 'newCard';
-        card.appendTo('#wall');
+        card.appendTo(wall);
         card.draggable( 'option', 'revert', false ); 
-        card.draggable( 'option', 'containment', 'ul#wall' );
+        card.draggable( 'option', 'containment', wall );
       }
       // change the position of the draggable to the
       // position of the helper (which is relative to the 
       // proper parent e.g. #wall)
       card.position({
-        of: '#wall',
+        of: wall,
         at: 'left top',
         my: 'left top',
         offset: ui.position.left + ' ' + ui.position.top
@@ -252,9 +263,9 @@ $(function() {
     this.newCardFromRemote = function(data) {
       
       $(this.createCardHtml(data.card.id, data.card.text))
-        .appendTo('#wall')
+        .appendTo(wall)
         .position({ //have it fly in from the top-center
-          of: '#wall',
+          of: wall,
           at: 'center top',
           my: 'center top',
           offset: '0 0'
@@ -264,7 +275,7 @@ $(function() {
           left: data.card.position.left
         }, 1500)
         .draggable( {
-              containment: 'ul#wall',
+              containment: wall,
               helper: 'clone',
               cursor: 'move',
               start: this.draggableStart,

@@ -15,22 +15,15 @@
   <script src="/lib/sockjs.min.js" type="text/javascript" charset="utf-8"></script>
   <script src="/lib/push-it.js" type="text/javascript" charset="utf-8"></script>
   
-  <script src="/scripts.js" type="text/javascript" charset="utf-8"></script>  
 </head>
 <body>
 
   <div id="content">
   
-    <ul id="wall">
-      <!-- public cards go here -->
-    </ul>
-    
-    <a id="newCard" href="#">+</a> Cards below are private; Cards above are public. Drag cards from below to above to share. (<a href="#" id="reconnect">reconnect</a>)
-    
-    <ul id="hand">
-      <!-- private cards go here -->
-    </ul>
-  
+      <form action="/wall/new" method="post">
+				<input type="hidden" name="action" value="new-wall">
+				<input type="submit" value="Create Wall">
+      </form>
   </div>
   
 </body>
