@@ -17,18 +17,27 @@ Wall.prototype = {
     // save it to the database
     this.database.hset("wall:" + this.id, "id", this.id);
     this.database.hset("wall:" + this.id, "title", "");
+    this.database.hset("wall:" + this.id, "created", 
+      String(Math.round(new Date().getTime() / 1000)));
     this.database.rpush("wall:all", "wall:" + this.id);
   },
   
-  load: function(id, callback) {
+  load: function(id, setLastAccess, callback) {
     var self = this;
     var database = this.database;
+    
+    setLastAccess || (setLastAccess = false);
     
     //try to load the Wall
     database.hgetall("wall:" + id, function (err, wall) {
     	if (wall.id != undefined) {
-    	  self.id = wall.id,
-    	  self.title = wall.title,			
+    	  self.id = wall.id;
+    	  self.title = wall.title;
+    	  
+    	  if (setLastAccess) {
+    	    database.hset("wall:" + this.id, "lastAccess", 
+            String(Math.round(new Date().getTime() / 1000)));
+    	  }
 				// Load the wall's cards
 				database.lrange("wall:"+self.id+":cards", 0, -1, function (err, cardIds) {
 					database.mget(cardIds, function (err, cards) {

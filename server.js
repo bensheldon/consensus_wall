@@ -52,7 +52,7 @@ server.use(connect.router(function(server){
   server.get('/wall/:id', function(req, res, next){
     var wallId = req.params.id; //from the GET path
     var wall = new Wall(database);
-    wall.load(req.params.id, function(wall) {    
+    wall.load(req.params.id, true, function(wall) {    
       // if no ID, it doesn't exist
       if (wall.id != null) {
         var data = {
