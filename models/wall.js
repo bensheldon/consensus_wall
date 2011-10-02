@@ -17,6 +17,7 @@ Wall.prototype = {
     // save it to the database
     this.database.hset("wall:" + this.id, "id", this.id);
     this.database.hset("wall:" + this.id, "title", "");
+    this.database.rpush("wall:all", "wall:" + this.id);
   },
   
   load: function(id, callback) {
