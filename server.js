@@ -6,6 +6,9 @@ var PushIt = require ('push-it').PushIt,
     sys = require('sys'),
     Jade = require('jade'),
     redis = require('redis');
+    
+// Load Models
+var Wall = require("./models/wall");
 
 try{
    var options = JSON.parse(fs.readFileSync(__dirname+"/options.json"))  
@@ -36,62 +39,40 @@ server.use(connect.router(function(server){
 	server.post('/wall/new', function(req, res, next) {
 		console.log(req.body);
 		if (req.body.action == "new-wall") {
-			// create a new wallID (should probably check that it doesn't already exist)
-			var wallId = UUID(10, 64);
-			
-			// save it to the database
-			database.hset("wall:" + wallId, "id", wallId);
-			database.hset("wall:" + wallId, "title", "");
+		  var wall = new Wall(database);
+		  wall.create();
 			
 			// redirect to that page.
 			res.writeHead(302, {
- 				Location: "/wall/" + wallId
+ 				Location: "/wall/" + wall.id
 			});
 			res.end();
 		}
 	});
   server.get('/wall/:id', function(req, res, next){
     var wallId = req.params.id; //from the GET path
-    
-    //try to load the Wall
-    database.hgetall("wall:" + wallId, function (err, wall) {
-    	if (wall.id == undefined) {
-    		// Wall doesn't exist => 404
-    		res.writeHead(404, {'content-type': 'text/html'});
-    		views.notFound = fs.readFileSync(__dirname + '/views/404.jade', 'utf8');
-				var renderNotFound = Jade.compile(views.notFound, {locals: true})
-				res.write(renderNotFound());
-				res.end();    
-    	} else {
-    		console.log("wall object:");
-    		console.log(wall);
-				// wall exists
-				wall.cards = [];
-    	
-				// Load the wall's cards
-				database.lrange("wall:"+wallId+":cards", 0, -1, function (err, cardIds) {
-					database.mget(cardIds, function (err, cards) {
-						for (var i in cards) {
-							cards[i] = JSON.parse(cards[i]); // parse each card
-						}
-						if (cards != undefined) {
-							wall.cards = cards;
-						}
-				
-						var data = {
-							wall: wall
-						};
-				
-						// temp for debugging
-						views.wall = fs.readFileSync(__dirname + '/views/wall.jade', 'utf8');
-						
-						res.writeHead(200, { 'Content-Type': 'text/html' });
-						var renderWall = Jade.compile(views.wall, {locals: true})
-						res.write(renderWall(data));
-						res.end();    
-					});
-				});   
-    	}
+    var wall = new Wall(database);
+    wall.load(req.params.id, function(wall) {    
+      // if no ID, it doesn't exist
+      if (wall.id != null) {
+        var data = {
+          wall: wall
+        }
+        // temp for debugging
+        views.wall = fs.readFileSync(__dirname + '/views/wall.jade', 'utf8');
+        
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        var renderWall = Jade.compile(views.wall, {locals: true})
+        res.write(renderWall(data));
+        res.end();    
+      } else {
+        // Wall doesn't exist => 404
+        res.writeHead(404, {'content-type': 'text/html'});
+        views.notFound = fs.readFileSync(__dirname + '/views/404.jade', 'utf8');
+        var renderNotFound = Jade.compile(views.notFound, {locals: true})
+        res.write(renderNotFound());
+        res.end(); 
+      }      
     });
   });
 }));
@@ -192,15 +173,3 @@ pi.onDisconnect = function(agent){
   console.log("disconnected agent: " + agent.id);
 }
 
-/**
- * 
- */ 
-var UUID = function(len, radix) {
-	var BASE64CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split(''); 
-	var chars = BASE64CHARS, uuid = [], i=0;
-	radix = radix || chars.length;
-	len = len || 22;
-
-	for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random()*radix];
-	return uuid.join('');
-}
