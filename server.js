@@ -6,20 +6,18 @@ var PushIt = require ('push-it').PushIt,
     sys = require('sys'),
     Jade = require('jade'),
     redis = require('redis');
-    
-// Load Models
-var Wall = require("./models/wall");
 
-try{
-   var options = JSON.parse(fs.readFileSync(__dirname+"/options.json"))  
-}catch(e){
+try {
+   var options = JSON.parse(fs.readFileSync(__dirname+"/options.json"));  
+}
+catch(e) {
    console.error("Could not load the options file!: ", e.toString());
-   process.exit()
+   process.exit();
 }
 
 
 var views = {
-	wall: fs.readFileSync(__dirname + '/views/wall.jade', 'utf8'),
+	wall: fs.readFileSync(__dirname + '/views/wall.jade', 'utf8')
 };
 
 // Connect to the database
@@ -29,6 +27,10 @@ database.on('error', function(err) {
     console.log('Error ' + err);
 });
 console.log("Database connected...");
+
+// Load Models
+var Wall = require("./models/wall");
+var Card = require("./models/card");
 
 
 var server = connect.createServer();
@@ -54,29 +56,28 @@ server.use(connect.router(function(server){
     var wall = new Wall(database);
     wall.load(req.params.id, true, function(wall) {    
       // if no ID, it doesn't exist
-      if (wall.id != null) {
+      if (wall.id !== null) {
         var data = {
           wall: wall
-        }
+        };
         // temp for debugging
         views.wall = fs.readFileSync(__dirname + '/views/wall.jade', 'utf8');
         
         res.writeHead(200, { 'Content-Type': 'text/html' });
-        var renderWall = Jade.compile(views.wall, {locals: true})
+        var renderWall = Jade.compile(views.wall, {locals: true});
         res.write(renderWall(data));
         res.end();    
       } else {
         // Wall doesn't exist => 404
         res.writeHead(404, {'content-type': 'text/html'});
         views.notFound = fs.readFileSync(__dirname + '/views/404.jade', 'utf8');
-        var renderNotFound = Jade.compile(views.notFound, {locals: true})
+        var renderNotFound = Jade.compile(views.notFound, {locals: true});
         res.write(renderNotFound());
         res.end(); 
       }      
     });
   });
 }));
-
 
 server.use(connect.static(__dirname + '/static'));
 
@@ -100,66 +101,59 @@ pi.onPublicationRequest = function(channel, agent, message){
 
   switch(channelType) {
 		case 'wall' : 
-			var data = message.data
-			var action = data.action;
 			var wallId = channelId;
-			console.log(action);
-			console.log(channelId);
-
+			var data = message.data;
+			var action = message.data.action;
+			
 			switch (action) {
 				case 'newCard' :
-					var card = data.card;
-					database.set('card:'+ data.card.id, JSON.stringify( data.card ), function() {});
-					database.rpush('wall:'+wallId+":cards", 'card:'+ data.card.id, function() {});
-						console.log('saved card: ' + data.card.id);
-						channel.publish(message);
-						agent.publicationSuccess(message);
+				  var card = new Card();
+				  var newCard = data.card;
+					card.create(newCard.id, wallId, newCard.title, newCard.positionTop);
+					  channel.publish(message);
+					  agent.publicationSuccess(message);
+            agent.publicationDenied(err);
 					break;
+					
 				case 'moveCard' :
-					var newPosition = data.card.position;
-					database.get('card:'+ data.card.id, function(err, card) {
-						if (card) { // card may not be saved yet
-							card = JSON.parse(card);
-							card.position = newPosition;
-							database.set('card:'+ data.card.id, JSON.stringify(card), function() {});
-						}
-					});
+				  var card = new Card(database);			
+					card.updatePosition(data.id, data.card.position);
 					channel.publish(message);
 					agent.publicationSuccess(message); //received but don't echo out
 					break;
+					
 				case 'updateText' :
+				  var card = new Card(database);
 					var newText = data.card.text;
-					database.get('card:'+ data.card.id, function(err, card) {
-						if (card) { // card may not be saved yet
-							card = JSON.parse(card);
-							card.text = newText;
-							database.set('card:'+ data.card.id, JSON.stringify(card), function() {});
-						}
-					});
+					
+					card.updateTitle(data.card.id, data.card.text);
 					channel.publish(message);
 					agent.publicationSuccess(message); //received but don't echo out
-				case 'updateCard' :
-
 					break;
+				case 'updateCard' :
+          // nothing
+					break;
+					
 				case 'sync' :
 					database.lrange("wall:"+wallId+":cards", 0, -1, function (err, cardIds) {
-						database.mget(cardIds, function (err, cards) {
-							for (i in cards) {
-								var card = JSON.parse(cards[i]);
-								agent.send({
+					  for (i in cardIds) {
+					    var card = new Card(database);
+					    card.load(cardIds[i], function () {
+					    	agent.send({
 									channel: channel.name,
 									data: {
 										agentId: "server",
 										channel: channel.name,
 										data: {
 											action: "updateCard",
-											card: card
+											card: card.data
 										}
 									}
 								});
-							}
-						});
+					    });
+					  }
 					});
+					  
 					agent.publicationSuccess(message); //received but don't echo out
 					break;
 			default:

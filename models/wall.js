@@ -1,6 +1,6 @@
 var Wall = function(database){
   this.database = database;
-} 
+};
 
 Wall.prototype = {
   id: null,
@@ -25,6 +25,8 @@ Wall.prototype = {
   load: function(id, setLastAccess, callback) {
     var self = this;
     var database = this.database;
+    
+    console.log("Wall.load(" + id + ")");
     
     setLastAccess || (setLastAccess = false);
     
@@ -72,4 +74,4 @@ var UUID = function(len, radix) {
 
 	for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random()*radix];
 	return uuid.join('');
-}
+};
