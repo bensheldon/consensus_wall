@@ -107,26 +107,26 @@ pi.onPublicationRequest = function(channel, agent, message){
 			
 			switch (action) {
 				case 'newCard' :
-				  var card = new Card();
+				  var card = new Card(database);
 				  var newCard = data.card;
-					card.create(newCard.id, wallId, newCard.title, newCard.positionTop);
+				  console.log(data.card);
+					card.create(newCard.id, wallId, newCard.title, newCard.position);
 					  channel.publish(message);
 					  agent.publicationSuccess(message);
-            agent.publicationDenied(err);
 					break;
 					
 				case 'moveCard' :
 				  var card = new Card(database);			
-					card.updatePosition(data.id, data.card.position);
+					card.updatePosition(data.card.id, data.card.position);
 					channel.publish(message);
 					agent.publicationSuccess(message); //received but don't echo out
 					break;
 					
 				case 'updateText' :
 				  var card = new Card(database);
-					var newText = data.card.text;
+					var newText = data.card.title;
 					
-					card.updateTitle(data.card.id, data.card.text);
+					card.updateTitle(data.card.id, data.card.title);
 					channel.publish(message);
 					agent.publicationSuccess(message); //received but don't echo out
 					break;
@@ -137,7 +137,9 @@ pi.onPublicationRequest = function(channel, agent, message){
 				case 'sync' :
 					database.lrange("wall:"+wallId+":cards", 0, -1, function (err, cardIds) {
 					  for (i in cardIds) {
-					    var card = new Card(database);
+					  	var card = new Card(database);
+					  	console.log(cardIds);
+
 					    card.load(cardIds[i], function () {
 					    	agent.send({
 									channel: channel.name,

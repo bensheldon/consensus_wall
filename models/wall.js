@@ -32,7 +32,7 @@ Wall.prototype = {
     
     //try to load the Wall
     database.hgetall("wall:" + id, function (err, wall) {
-    	if (wall.id != undefined) {
+    	if (wall.id !== undefined) {
     	  self.id = wall.id;
     	  self.title = wall.title;
     	  
@@ -42,12 +42,15 @@ Wall.prototype = {
     	  }
 				// Load the wall's cards
 				database.lrange("wall:"+self.id+":cards", 0, -1, function (err, cardIds) {
-					database.mget(cardIds, function (err, cards) {
-						for (var i in cards) {
-							self.cards[i] = JSON.parse(cards[i]); // parse each card
-						}
-						callback(self);
-    	    }); 
+				  var multi = database.multi();
+				  for (var i in cardIds) {
+				    multi.hgetall(cardIds[i]);
+				  }
+					multi.exec(function (err, cards) {
+            self.cards = cards;
+					  callback(self);
+					});
+
     	  });
       }
       else {

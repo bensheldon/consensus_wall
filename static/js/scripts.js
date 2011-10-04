@@ -6,9 +6,8 @@ $(function() {
 	wall = "ul#" + wall; // for retrieving the element
   var channel = "/wall/" + wallId;
   
-  console.log(channel);
+  console.log("Channel: " + channel);
   
-  var successful = [];
   var connectionOptions = {
   	channels: [channel],
   	credentials: 'It is meeee!'
@@ -51,7 +50,7 @@ $(function() {
 				action: 'updateCard',
 				id: card.attr('id'),
 				position: card.position(),
-				text: card.find('textarea').val()
+				title: card.find('textarea').val()
 			});
 		});
   }
@@ -76,25 +75,25 @@ $(function() {
   	          cardSet.newCardFromRemote(data);
   	        break;
   	        case 'moveCard' :
-    	        $('#'+data.card.id).animate({
-    	          top: data.card.position.top,
-    	          left: data.card.position.left
+    	        $('#card-'+data.card.id).animate({
+    	          top: data.card.position.split(',')[1],
+    	          left: data.card.position.split(',')[0]
     	        }, 0);
   	        break;
   	        case 'updateText' :
-  	          $('#'+data.card.id).find('textarea').val(data.card.text);
+  	          $('#card-'+data.card.id).find('textarea').val(data.card.title);
   	        break;
   	        case 'updateCard' :
-  	          if ( $('#'+data.card.id).length == 0) {
+  	          if ( $('#card-'+data.card.id).length == 0) {
   	            //doesn't yet exist
   	            cardSet.newCardFromRemote(data);
   	          }
   	          else {
   	            // card exists
-  	            $('#'+data.id).find('textarea').val(data.text);
-  	            $('#'+data.id).animate({
-  	              top: data.position.top,
-  	              left: data.position.left
+  	            $('#'+data.card.id).find('textarea').val(data.title);
+  	            $('#'+data.card.id).animate({
+  	              top: data.card.position.split(',')[1],
+  	              left: data.card.position.split(',')[1]
   	            }, 0);
   	          }
   	          break;
@@ -120,12 +119,11 @@ $(function() {
     var myCount = 0;
     
     this.init = function() {
-      var that = this;
       // set up the drop point
       $(wall).droppable({
         accept: 'li.card',
         hoverClass: 'hovered',
-        drop: this.repositionCard
+        drop: this.dropCard
       });
       
       // make any existing cards draggable
@@ -139,38 +137,35 @@ $(function() {
               stop: this.draggableStop
         });   
       
+      // setup typing 
       $(wall).delegate('li textarea', 'keyup', function() {
          var card = $(this).parent();
          sendMessage({
            action: 'updateText',
            card: {
-						 id: card.attr('id'),
-						 text: card.find('textarea').val()
+						 id: card.attr('id').split('-')[1],
+						 title: card.find('textarea').val()
 					 }
          });
       });    
-    
     }
     
-    this.createCardHtml = function( id, textarea ) {
-      var that = this;
-      
+    this.createCardHtml = function( id, title ) {      
       if (id == undefined) {
-        id = 'card-' + window.pushIt.agentId + '-' + myCount++;
-      }
-      if (textarea == undefined) {
-        textarea = '';
+        id = window.pushIt.agentId + myCount++;
       }
       
-      var html = '<li id="'+id+'" class="card">'
-               +   '<textarea>' + textarea + '</textarea>'
+      if (title == undefined) {
+        title = '';
+      }
+      
+      var html = '<li id="card-'+id+'" class="card">'
+               +   '<textarea>' + title + '</textarea>'
                + '</li>';
       return html;
     }
     
-    this.newCardInHand = function() {
-      var that = this;
-      
+    this.newCardInHand = function() {      
       $(this.createCardHtml())
         .prependTo('ul#hand')
         .draggable( {
@@ -180,7 +175,6 @@ $(function() {
               cursor: 'move',
               revert: true,
               start: this.draggableStart,
-              drag: this.draggableDrag,
               stop: this.draggableStop
         });   
     }
@@ -198,46 +192,36 @@ $(function() {
     this.draggableDrag = function(event,ui) {
     	var card = $(this);
     	var helper = $(ui.helper);
+    	var position = helper.position(); // b/c we're moving the helper
+    	
       sendMessage({
         action: 'moveCard',
         card: {
-					id: card.attr('id'),
-					position: helper.position()
+					id: card.attr('id').split('-')[1],
+					position: position.left + ',' + position.top
 				}
       });
     }
     
     this.draggableStop = function(event, ui) {
       $(this).css('opacity', 1);
-      var card = $(this);
-      
-      sendMessage({
-        action: 'moveCard',
-        card: {
-					id: card.attr('id'),
-					position: card.position(),
-					text: card.find('textarea').val(),
-				}
-      });
-        
     }
     
     /**
      *  Callback for droppable on #wall
      */
-    this.repositionCard = function(event, ui) {
+    this.dropCard = function(event, ui) {
       var card = $(ui.draggable);
-      var action = 'repositionCard';
-      console.log(wall);
-
-      
-      
+      var cardId = card.attr('id').split('-')[1];
+      var action = 'moveCard';
+            
       // if not on a .wall, must add it
       if (!(card.parent().hasClass("wall"))) {
         action = 'newCard';
         card.appendTo(wall);
         card.draggable( 'option', 'revert', false ); 
         card.draggable( 'option', 'containment', wall );
+        card.draggable( 'option', 'drag', this.draggableDrag);
       }
       // change the position of the draggable to the
       // position of the helper (which is relative to the 
@@ -248,21 +232,21 @@ $(function() {
         my: 'left top',
         offset: ui.position.left + ' ' + ui.position.top
       });
+      var position = card.position();
 
-         
       sendMessage({
         action: action,
         card: {
-					id: card.attr('id'),
-					position: card.position(),
-					text: card.find('textarea').val()
+					id: cardId,
+					title: card.find('textarea').val(),
+					position: position.left + ',' + position.top
 				}
       });
     }
     
     this.newCardFromRemote = function(data) {
-      
-      $(this.createCardHtml(data.card.id, data.card.text))
+      var card = data.card;
+      $(this.createCardHtml(card.id, card.title))
         .appendTo(wall)
         .position({ //have it fly in from the top-center
           of: wall,
@@ -271,33 +255,18 @@ $(function() {
           offset: '0 0'
         })
         .animate({
-          top: data.card.position.top,
-          left: data.card.position.left
+          left: data.card.position.split(",")[0],
+          top: data.card.position.split(",")[1]
         }, 1500)
-        .draggable( {
+        .draggable({
               containment: wall,
               helper: 'clone',
               cursor: 'move',
               start: this.draggableStart,
               drag: this.draggableDrag,
               stop: this.draggableStop
-          });
-          
-        
+        });
     }
 
   }
-
 });
-
-    
-
-
-
-
-
-
-
-
-
-

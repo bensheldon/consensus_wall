@@ -10,8 +10,8 @@ html
         ul(id= "wall-" + wall.id).wall
           if wall.cards.length > 0
             each card in wall.cards
-              li(id= card.id, class= "card", style= "top:"+card.position.top+"px; left: "+card.position.left+"px;")
-                textarea= card.text
+              li(id= "card-" + card.id, class= "card", style= "top:"+card.position.split(",")[1]+"px; left: "+card.position.split(",")[0]+"px;")
+                textarea= card.title
         
         p <a id="newCard" href="#">+</a> Cards below are private; Cards above are public. Drag cards from below to above to share. (<a href="#" id="reconnect">reconnect</a>)
 

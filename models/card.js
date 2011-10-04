@@ -27,7 +27,7 @@ Card.prototype = {
     card.position = position;
     
     // save it to the this.database
-    this.database.hmset("card:" + this.id, card);
+    this.database.hmset("card:" + card.id, card);
     this.database.rpush("card:all", "card:" + card.id);
     this.database.rpush("wall:" + card.wallId + ":cards", "card:" + card.id);
   },
