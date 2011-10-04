@@ -32,26 +32,26 @@ Wall.prototype = {
     
     //try to load the Wall
     database.hgetall("wall:" + id, function (err, wall) {
-    	if (wall.id !== undefined) {
-    	  self.id = wall.id;
-    	  self.title = wall.title;
-    	  
-    	  if (setLastAccess) {
-    	    database.hset("wall:" + this.id, "lastAccess", 
+      if (wall.id !== undefined) {
+        self.id = wall.id;
+        self.title = wall.title;
+        
+        if (setLastAccess) {
+          database.hset("wall:" + this.id, "lastAccess", 
             String(Math.round(new Date().getTime() / 1000)));
-    	  }
-				// Load the wall's cards
-				database.lrange("wall:"+self.id+":cards", 0, -1, function (err, cardIds) {
-				  var multi = database.multi();
-				  for (var i in cardIds) {
-				    multi.hgetall(cardIds[i]);
-				  }
-					multi.exec(function (err, cards) {
+        }
+        // Load the wall's cards
+        database.lrange("wall:"+self.id+":cards", 0, -1, function (err, cardIds) {
+          var multi = database.multi();
+          for (var i in cardIds) {
+            multi.hgetall(cardIds[i]);
+          }
+          multi.exec(function (err, cards) {
             self.cards = cards;
-					  callback(self);
-					});
+            callback(self);
+          });
 
-    	  });
+        });
       }
       else {
         callback(self); // return the empty object
@@ -70,11 +70,11 @@ module.exports = Wall;
  * 
  */ 
 var UUID = function(len, radix) {
-	var BASE64CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split(''); 
-	var chars = BASE64CHARS, uuid = [], i=0;
-	radix = radix || chars.length;
-	len = len || 22;
+  var BASE64CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split(''); 
+  var chars = BASE64CHARS, uuid = [], i=0;
+  radix = radix || chars.length;
+  len = len || 22;
 
-	for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random()*radix];
-	return uuid.join('');
+  for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random()*radix];
+  return uuid.join('');
 };

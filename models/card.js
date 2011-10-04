@@ -37,10 +37,10 @@ Card.prototype = {
     
     //try to load the card
     this.database.hgetall("card:" + id, function (err, card) {
-    	if (card.id != undefined) {
-    	  self.data = card;
-    	  callback(self);
-    	}
+      if (card.id != undefined) {
+        self.data = card;
+        callback(self);
+      }
       else {
         callback(self); // return the empty object
       }
@@ -66,11 +66,11 @@ module.exports = Card;
  * 
  */ 
 var UUID = function(len, radix) {
-	var BASE64CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split(''); 
-	var chars = BASE64CHARS, uuid = [], i=0;
-	radix = radix || chars.length;
-	len = len || 22;
+  var BASE64CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split(''); 
+  var chars = BASE64CHARS, uuid = [], i=0;
+  radix = radix || chars.length;
+  len = len || 22;
 
-	for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random()*radix];
-	return uuid.join('');
+  for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random()*radix];
+  return uuid.join('');
 };

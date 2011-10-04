@@ -17,7 +17,7 @@ catch(e) {
 
 
 var views = {
-	wall: fs.readFileSync(__dirname + '/views/wall.jade', 'utf8')
+  wall: fs.readFileSync(__dirname + '/views/wall.jade', 'utf8')
 };
 
 // Connect to the database
@@ -38,19 +38,19 @@ var server = connect.createServer();
 /** Load a wall **/
 server.use(connect.bodyParser());
 server.use(connect.router(function(server){
-	server.post('/wall/new', function(req, res, next) {
-		console.log(req.body);
-		if (req.body.action == "new-wall") {
-		  var wall = new Wall(database);
-		  wall.create();
-			
-			// redirect to that page.
-			res.writeHead(302, {
- 				Location: "/wall/" + wall.id
-			});
-			res.end();
-		}
-	});
+  server.post('/wall/new', function(req, res, next) {
+    console.log(req.body);
+    if (req.body.action == "new-wall") {
+      var wall = new Wall(database);
+      wall.create();
+      
+      // redirect to that page.
+      res.writeHead(302, {
+        Location: "/wall/" + wall.id
+      });
+      res.end();
+    }
+  });
   server.get('/wall/:id', function(req, res, next){
     var wallId = req.params.id; //from the GET path
     var wall = new Wall(database);
@@ -100,69 +100,69 @@ pi.onPublicationRequest = function(channel, agent, message){
   var channelId = String(channel.name).split("/")[2];
 
   switch(channelType) {
-		case 'wall' : 
-			var wallId = channelId;
-			var data = message.data;
-			var action = message.data.action;
-			
-			switch (action) {
-				case 'newCard' :
-				  var card = new Card(database);
-				  var newCard = data.card;
-				  console.log(data.card);
-					card.create(newCard.id, wallId, newCard.title, newCard.position);
-					  channel.publish(message);
-					  agent.publicationSuccess(message);
-					break;
-					
-				case 'moveCard' :
-				  var card = new Card(database);			
-					card.updatePosition(data.card.id, data.card.position);
-					channel.publish(message);
-					agent.publicationSuccess(message); //received but don't echo out
-					break;
-					
-				case 'updateText' :
-				  var card = new Card(database);
-					var newText = data.card.title;
-					
-					card.updateTitle(data.card.id, data.card.title);
-					channel.publish(message);
-					agent.publicationSuccess(message); //received but don't echo out
-					break;
-				case 'updateCard' :
+    case 'wall' : 
+      var wallId = channelId;
+      var data = message.data;
+      var action = message.data.action;
+      
+      switch (action) {
+        case 'newCard' :
+          var card = new Card(database);
+          var newCard = data.card;
+          console.log(data.card);
+          card.create(newCard.id, wallId, newCard.title, newCard.position);
+            channel.publish(message);
+            agent.publicationSuccess(message);
+          break;
+          
+        case 'moveCard' :
+          var card = new Card(database);      
+          card.updatePosition(data.card.id, data.card.position);
+          channel.publish(message);
+          agent.publicationSuccess(message); //received but don't echo out
+          break;
+          
+        case 'updateText' :
+          var card = new Card(database);
+          var newText = data.card.title;
+          
+          card.updateTitle(data.card.id, data.card.title);
+          channel.publish(message);
+          agent.publicationSuccess(message); //received but don't echo out
+          break;
+        case 'updateCard' :
           // nothing
-					break;
-					
-				case 'sync' :
-					database.lrange("wall:"+wallId+":cards", 0, -1, function (err, cardIds) {
-					  for (i in cardIds) {
-					  	var card = new Card(database);
-					  	console.log(cardIds);
+          break;
+          
+        case 'sync' :
+          database.lrange("wall:"+wallId+":cards", 0, -1, function (err, cardIds) {
+            for (i in cardIds) {
+              var card = new Card(database);
+              console.log(cardIds);
 
-					    card.load(cardIds[i], function () {
-					    	agent.send({
-									channel: channel.name,
-									data: {
-										agentId: "server",
-										channel: channel.name,
-										data: {
-											action: "updateCard",
-											card: card.data
-										}
-									}
-								});
-					    });
-					  }
-					});
-					  
-					agent.publicationSuccess(message); //received but don't echo out
-					break;
-			default:
-				channel.publish(message);
-				agent.publicationSuccess(message);
-		}
-	}
+              card.load(cardIds[i], function () {
+                agent.send({
+                  channel: channel.name,
+                  data: {
+                    agentId: "server",
+                    channel: channel.name,
+                    data: {
+                      action: "updateCard",
+                      card: card.data
+                    }
+                  }
+                });
+              });
+            }
+          });
+            
+          agent.publicationSuccess(message); //received but don't echo out
+          break;
+      default:
+        channel.publish(message);
+        agent.publicationSuccess(message);
+    }
+  }
 }
 
 pi.onDisconnect = function(agent){
