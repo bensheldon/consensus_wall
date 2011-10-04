@@ -138,7 +138,6 @@ pi.onPublicationRequest = function(channel, agent, message){
           database.lrange("wall:"+wallId+":cards", 0, -1, function (err, cardIds) {
             for (i in cardIds) {
               var card = new Card(database);
-              console.log(cardIds);
 
               card.load(cardIds[i], function () {
                 agent.send({

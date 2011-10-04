@@ -19,7 +19,7 @@ Wall.prototype = {
     this.database.hset("wall:" + this.id, "title", "");
     this.database.hset("wall:" + this.id, "created", 
       String(Math.round(new Date().getTime() / 1000)));
-    this.database.rpush("wall:all", "wall:" + this.id);
+    this.database.rpush("wall:all", this.id);
   },
   
   load: function(id, setLastAccess, callback) {
@@ -37,14 +37,14 @@ Wall.prototype = {
         self.title = wall.title;
         
         if (setLastAccess) {
-          database.hset("wall:" + this.id, "lastAccess", 
+          database.hset("wall:" + self.id, "lastAccess", 
             String(Math.round(new Date().getTime() / 1000)));
         }
         // Load the wall's cards
         database.lrange("wall:"+self.id+":cards", 0, -1, function (err, cardIds) {
           var multi = database.multi();
           for (var i in cardIds) {
-            multi.hgetall(cardIds[i]);
+            multi.hgetall('card:' + cardIds[i]);
           }
           multi.exec(function (err, cards) {
             self.cards = cards;
