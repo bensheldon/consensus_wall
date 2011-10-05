@@ -1,2 +1,4 @@
 .DS_Store
 options.json
+uploads/images/tmp/*
+uploads/images/*

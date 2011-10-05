@@ -12,20 +12,35 @@ Card.prototype = {
     wallId: null,
     created: null,
     title: null,
+    imagePath: null,
     position: null
   },
   
-  create: function(id, wallId, title, position){
+  create: function(id, wallId, title, imagePath, position){
     // create a new wallID (should probably check that it doesn't already exist)
     (id || (id = UUID(10, 64)));
     var card = this.data;
     
     card.id = id;
     card.wallId = wallId;
-    card.created = String(Math.round(new Date().getTime() / 1000)),
-    card.title = title;
-    card.position = position;
+    card.created = String(Math.round(new Date().getTime() / 1000));
     
+    if (typeof imagePath === "undefined") {
+      delete card.imagePath;
+    }
+    else {
+      card.imagePath = imagePath;
+    }
+    
+    if (typeof title === "undefined") {
+      delete card.title;
+    }
+    else {
+      card.title = title;
+    }
+    
+    card.position = position;
+      
     // save it to the this.database
     this.database.hmset("card:" + card.id, card);
     this.database.rpush("card:all", card.id);

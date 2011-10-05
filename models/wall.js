@@ -48,6 +48,7 @@ Wall.prototype = {
           }
           multi.exec(function (err, cards) {
             self.cards = cards;
+            console.log(cards);
             callback(self);
           });
 

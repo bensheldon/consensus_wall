@@ -5,7 +5,9 @@ var PushIt = require ('push-it').PushIt,
     connect = require('connect'),
     sys = require('sys'),
     Jade = require('jade'),
-    redis = require('redis');
+    redis = require('redis'),
+    formidable = require('formidable');
+
 
 try {
    var options = JSON.parse(fs.readFileSync(__dirname+"/options.json"));  
@@ -39,7 +41,6 @@ var server = connect.createServer();
 server.use(connect.bodyParser());
 server.use(connect.router(function(server){
   server.post('/wall/new', function(req, res, next) {
-    console.log(req.body);
     if (req.body.action == "new-wall") {
       var wall = new Wall(database);
       wall.create();
@@ -51,6 +52,29 @@ server.use(connect.router(function(server){
       res.end();
     }
   });
+  
+  server.post('/upload', function(req, res, next){
+    var form = new formidable.IncomingForm(),
+        files = [];
+    form.uploadDir = "./uploads/images/tmp";
+    form
+      .on('file', function(field, file) {
+        if (file.size > 1) {
+          var extension = (/[.]/.exec(file.name)) ? /[^.]+$/.exec(file.name) : undefined;
+          var filename = UUID(10, 64) + '.'+ extension;
+          fs.renameSync(file.path, "./uploads/images/"+ filename);
+          files.push("/images/"+ filename);
+        }
+      })
+      .on('end', function() {
+        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.write(JSON.stringify(files));
+        res.end();   
+      });
+    form.parse(req);
+  });
+  
+  
   server.get('/wall/:id', function(req, res, next){
     var wallId = req.params.id; //from the GET path
     var wall = new Wall(database);
@@ -80,6 +104,8 @@ server.use(connect.router(function(server){
 }));
 
 server.use(connect.static(__dirname + '/static'));
+server.use(connect.static(__dirname + '/uploads'));
+
 
 server.listen(PORT);
 console.log("now connected and listening on "+ PORT);
@@ -109,8 +135,8 @@ pi.onPublicationRequest = function(channel, agent, message){
         case 'newCard' :
           var card = new Card(database);
           var newCard = data.card;
-          console.log(data.card);
-          card.create(newCard.id, wallId, newCard.title, newCard.position);
+          card.create(newCard.id, wallId, newCard.title, 
+                      newCard.imagePath, newCard.position);
             channel.publish(message);
             agent.publicationSuccess(message);
           break;
@@ -135,10 +161,10 @@ pi.onPublicationRequest = function(channel, agent, message){
           break;
           
         case 'sync' :
+          console.log("Sync: " + wallId);
           database.lrange("wall:"+wallId+":cards", 0, -1, function (err, cardIds) {
             for (i in cardIds) {
               var card = new Card(database);
-
               card.load(cardIds[i], function () {
                 agent.send({
                   channel: channel.name,
@@ -168,3 +194,15 @@ pi.onDisconnect = function(agent){
   console.log("disconnected agent: " + agent.id);
 }
 
+/**
+ * 
+ */ 
+var UUID = function(len, radix) {
+  var BASE64CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split(''); 
+  var chars = BASE64CHARS, uuid = [], i=0;
+  radix = radix || chars.length;
+  len = len || 22;
+
+  for (i = 0; i < len; i++) uuid[i] = chars[0 | Math.random()*radix];
+  return uuid.join('');
+};

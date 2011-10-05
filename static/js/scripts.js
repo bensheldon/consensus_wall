@@ -31,13 +31,14 @@ $(function() {
     }, onError, onSuccess);
   }  
   
-  
   $('a#reconnect').click(function(event) {
   		event.preventDefault();
   		$(function() {
   			window.pushIt.initConnection(connectionOptions);
   		});
   });
+  
+  
   function reconnect() {
 
   	//window.pushIt.subscribe(channel, onSuccess, onError);
@@ -86,7 +87,9 @@ $(function() {
   	        case 'updateCard' :
   	          if ( $('#card-'+data.card.id).length == 0) {
   	            //doesn't yet exist
-  	            cardSet.newCardFromRemote(data);
+  	            if (data.card.id !== null) {
+  	              cardSet.newCardFromRemote(data);
+  	            }
   	          }
   	          else {
   	            // card exists
@@ -117,6 +120,7 @@ $(function() {
   
   function CardSet() {
     var myCount = 0;
+    var self = this;
     
     this.init = function() {
       // set up the drop point
@@ -147,22 +151,59 @@ $(function() {
 					 }
          });
       });    
+    
+    
+      $('input[type="file"]').dropUpload({
+        'uploadUrl'	 : '/upload',
+        'uploaded'	 : function(resp) {
+          var imagePaths = JSON.parse(resp);
+          for (i in imagePaths) {
+            $(self.createCardHtml(undefined, undefined, imagePaths[i]))
+              .prependTo('ul#hand')
+              .draggable( {
+                    containment: '#content',
+                    appendTo: wall,
+                    helper: 'clone',
+                    cursor: 'move',
+                    revert: true,
+                    start: self.draggableStart,
+                    stop: self.draggableStop
+              });
+          }
+        },
+        'dropClass' : 'file-drop',
+        'dropHoverClass' : 'file-drop-hover',
+        'defaultText'  : '',
+        'hoverText'	 : 'Let go to upload!'	
+      });   
+    
+    
     }
     
-    this.createCardHtml = function( id, title ) {      
-      if (id == undefined) {
+    this.createCardHtml = function( id, title, imagePath) { 
+      console.log(title); 
+      if (id === undefined) {
         id = window.pushIt.agentId + myCount++;
       }
       
-      if (title == undefined) {
+      if (title === undefined) {
         title = '';
       }
       
-      var html = '<li id="card-'+id+'" class="card">'
-               +   '<textarea>' + title + '</textarea>'
-               + '</li>';
+      if (imagePath !== undefined) {
+        var html = '<li id="card-'+id+'" class="card card-image">'
+           +   '<img src="' + imagePath + '" />'
+           + '</li>';
+      }
+      else {     
+        var html = '<li id="card-'+id+'" class="card">'
+                 +   '<textarea>' + title + '</textarea>'
+                 + '</li>';
+      }
       return html;
     }
+    
+
     
     this.newCardInHand = function() {  
       $(this.createCardHtml())
@@ -233,20 +274,32 @@ $(function() {
         offset: ui.position.left + ' ' + ui.position.top
       });
       var position = card.position();
-
-      sendMessage({
-        action: action,
-        card: {
-					id: cardId,
-					title: card.find('textarea').val(),
-					position: position.left + ',' + position.top
-				}
-      });
-    }
+      if (card.find('textarea').length > 0){
+        sendMessage({
+          action: action,
+          card: {
+            id: cardId,
+            title: card.find('textarea').val(),
+            position: position.left + ',' + position.top
+          }
+        });
+      }
+      if (card.find('img').length > 0){
+        sendMessage({
+          action: action,
+          card: {
+            id: cardId,
+            imagePath: card.find('img').attr('src'),
+            position: position.left + ',' + position.top
+          }
+        }); 
+      }
+    };
     
     this.newCardFromRemote = function(data) {
       var card = data.card;
-      $(this.createCardHtml(card.id, card.title))
+      
+      $(this.createCardHtml(card.id, card.title, card.imagePath))
         .appendTo(wall)
         .position({ //have it fly in from the top-center
           of: wall,

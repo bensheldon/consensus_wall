@@ -47,6 +47,14 @@ li.card {
   padding: 0;
 }
 
+li.card img {
+  max-height: 130px;
+  max-width: 130px;
+  height: auto;
+  width: auto;
+  margin: 20px auto 2px; 
+}
+
 li.card textarea {
   height: 42px;
   width: 130px;

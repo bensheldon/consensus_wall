@@ -11,18 +11,24 @@ html
           if wall.cards.length > 0
             each card in wall.cards
               li(id= "card-" + card.id, class= "card", style= "top:"+card.position.split(",")[1]+"px; left: "+card.position.split(",")[0]+"px;")
-                textarea= card.title
+                if card.title === undefined
+                  img(src= card.imagePath)
+                else
+                  textarea= card.title
         
         p <a id="newCard" href="#">+</a> Cards below are private; Cards above are public. Drag cards from below to above to share. (<a href="#" id="reconnect">reconnect</a>)
 
         ul#hand
-      
+        
+        input(id="upload", type= "file", name= "upload")
+        
 
 
     // Scripts at the bottom
     script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js" )
     script(src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js" )
     script(src="/js/lib/jquery.ui.touch-punch.js" )
+    script(src="/js/lib/jquery.drag.drop.js")
     script(src="/js/lib/push-it.js" )
     script(src="/js/lib/sockjs.min.js" )
     script(src="/js/lib/jquery.ba-throttle-debounce.min.js" )
