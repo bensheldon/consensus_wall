@@ -125,11 +125,10 @@ $(function() {
         hoverClass: 'hovered',
         drop: this.dropCard
       });
-      
       // make any existing cards draggable
       $(wall + " li.card")
         .draggable( {
-              containment: '#wall',
+              containment: wall,
               helper: 'clone',
               cursor: 'move',
               start: this.draggableStart,
@@ -165,7 +164,7 @@ $(function() {
       return html;
     }
     
-    this.newCardInHand = function() {      
+    this.newCardInHand = function() {  
       $(this.createCardHtml())
         .prependTo('ul#hand')
         .draggable( {
@@ -197,11 +196,11 @@ $(function() {
       sendMessage({
         action: 'moveCard',
         card: {
-					id: card.attr('id').split('-')[1],
-					position: position.left + ',' + position.top
-				}
+          id: card.attr('id').split('-')[1],
+          position: position.left + ',' + position.top
+        }
       });
-    }
+    };
     
     this.draggableStop = function(event, ui) {
       $(this).css('opacity', 1);
@@ -211,10 +210,11 @@ $(function() {
      *  Callback for droppable on #wall
      */
     this.dropCard = function(event, ui) {
+      var self = this;
       var card = $(ui.draggable);
       var cardId = card.attr('id').split('-')[1];
       var action = 'moveCard';
-            
+      
       // if not on a .wall, must add it
       if (!(card.parent().hasClass("wall"))) {
         action = 'newCard';
