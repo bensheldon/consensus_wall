@@ -34,7 +34,6 @@ console.log("Database connected...");
 var Wall = require("./models/wall");
 var Card = require("./models/card");
 
-
 var server = connect.createServer();
 
 /** Load a wall **/
