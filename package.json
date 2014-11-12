@@ -1,0 +1,23 @@
+{
+  "name": "consensus-wall",
+  "version": "0.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/bensheldon/consensus-wall.git"
+  },
+  "dependencies": {
+    "connect": "1.7.1",
+    "formidable": "1.0.6",
+    "jade": "0.16.2",
+    "push-it": "0.1.3",
+    "redis": "0.6.7",
+    "sockjs": "0.0.4",
+    "uuid-pure": "1.0.10"
+  }
+}
