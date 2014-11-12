@@ -1,6 +1,0 @@
-{
-  "staticAssetDirectory": "/static",
-  "mountPoint":"/push-it",
-  "nohelp": true,
-  "databaseAuth": ""
-}

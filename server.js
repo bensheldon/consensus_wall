@@ -2,29 +2,22 @@ var PORT = 57953;
 
 var PushIt = require ('push-it').PushIt,
     fs = require('fs'),
+    url = require("url"),
     connect = require('connect'),
     sys = require('sys'),
     Jade = require('jade'),
     redis = require('redis'),
     formidable = require('formidable');
 
-
-try {
-   var options = JSON.parse(fs.readFileSync(__dirname+"/options.json"));  
-}
-catch(e) {
-   console.error("Could not load the options file!: ", e.toString());
-   process.exit();
-}
-
-
 var views = {
   wall: fs.readFileSync(__dirname + '/views/wall.jade', 'utf8')
 };
 
 // Connect to the database
-var database = redis.createClient();
-database.auth(options.databaseAuth);
+var rtg = url.parse(process.env.REDIS_URL);
+var database = redis.createClient(rtg.port, rtg.hostname);
+database.auth(rtg.auth.split(":")[1]);
+
 database.on('error', function(err) {
     console.log('Error ' + err);
 });
@@ -43,7 +36,7 @@ server.use(connect.router(function(server){
     if (req.body.action == "new-wall") {
       var wall = new Wall(database);
       wall.create();
-      
+
       // redirect to that page.
       res.writeHead(302, {
         Location: "/wall/" + wall.id
@@ -51,7 +44,7 @@ server.use(connect.router(function(server){
       res.end();
     }
   });
-  
+
   server.post('/upload', function(req, res, next){
     var form = new formidable.IncomingForm(),
         files = [];
@@ -68,16 +61,16 @@ server.use(connect.router(function(server){
       .on('end', function() {
         res.writeHead(200, { 'Content-Type': 'text/html' });
         res.write(JSON.stringify(files));
-        res.end();   
+        res.end();
       });
     form.parse(req);
   });
-  
-  
+
+
   server.get('/wall/:id', function(req, res, next){
     var wallId = req.params.id; //from the GET path
     var wall = new Wall(database);
-    wall.load(req.params.id, true, function(wall) {    
+    wall.load(req.params.id, true, function(wall) {
       // if no ID, it doesn't exist
       if (wall.id !== null) {
         var data = {
@@ -85,19 +78,19 @@ server.use(connect.router(function(server){
         };
         // temp for debugging
         views.wall = fs.readFileSync(__dirname + '/views/wall.jade', 'utf8');
-        
+
         res.writeHead(200, { 'Content-Type': 'text/html' });
         var renderWall = Jade.compile(views.wall, {locals: true});
         res.write(renderWall(data));
-        res.end();    
+        res.end();
       } else {
         // Wall doesn't exist => 404
         res.writeHead(404, {'content-type': 'text/html'});
         views.notFound = fs.readFileSync(__dirname + '/views/404.jade', 'utf8');
         var renderNotFound = Jade.compile(views.notFound, {locals: true});
         res.write(renderNotFound());
-        res.end(); 
-      }      
+        res.end();
+      }
     });
   });
 }));
@@ -109,7 +102,11 @@ server.use(connect.static(__dirname + '/uploads'));
 server.listen(PORT);
 console.log("now connected and listening on "+ PORT);
 
-var pi = new PushIt(server, options);
+var pi = new PushIt(server, {
+  "staticAssetDirectory": "/static",
+  "mountPoint":"/push-it",
+  "nohelp": true
+});
 
 pi.onConnectionRequest = function(agent){
   agent.connected();
@@ -120,37 +117,37 @@ pi.onSubscriptionRequest = function(channel, agent){
   agent.subscribe(channel);
 }
 
-pi.onPublicationRequest = function(channel, agent, message){  
+pi.onPublicationRequest = function(channel, agent, message){
   var channelType = String(channel.name).split("/")[1];
   var channelId = String(channel.name).split("/")[2];
 
   switch(channelType) {
-    case 'wall' : 
+    case 'wall' :
       var wallId = channelId;
       var data = message.data;
       var action = message.data.action;
-      
+
       switch (action) {
         case 'newCard' :
           var card = new Card(database);
           var newCard = data.card;
-          card.create(newCard.id, wallId, newCard.title, 
+          card.create(newCard.id, wallId, newCard.title,
                       newCard.imagePath, newCard.position);
             channel.publish(message);
             agent.publicationSuccess(message);
           break;
-          
+
         case 'moveCard' :
-          var card = new Card(database);      
+          var card = new Card(database);
           card.updatePosition(data.card.id, data.card.position);
           channel.publish(message);
           agent.publicationSuccess(message); //received but don't echo out
           break;
-          
+
         case 'updateText' :
           var card = new Card(database);
           var newText = data.card.title;
-          
+
           card.updateTitle(data.card.id, data.card.title);
           channel.publish(message);
           agent.publicationSuccess(message); //received but don't echo out
@@ -158,7 +155,7 @@ pi.onPublicationRequest = function(channel, agent, message){
         case 'updateCard' :
           // nothing
           break;
-          
+
         case 'sync' :
           console.log("Sync: " + wallId);
           database.lrange("wall:"+wallId+":cards", 0, -1, function (err, cardIds) {
@@ -179,7 +176,7 @@ pi.onPublicationRequest = function(channel, agent, message){
               });
             }
           });
-            
+
           agent.publicationSuccess(message); //received but don't echo out
           break;
       default:
@@ -194,10 +191,10 @@ pi.onDisconnect = function(agent){
 }
 
 /**
- * 
- */ 
+ *
+ */
 var UUID = function(len, radix) {
-  var BASE64CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split(''); 
+  var BASE64CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
   var chars = BASE64CHARS, uuid = [], i=0;
   radix = radix || chars.length;
   len = len || 22;
