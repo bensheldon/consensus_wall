@@ -1,5 +1,3 @@
-var PORT = 57953;
-
 var PushIt = require ('push-it').PushIt,
     fs = require('fs'),
     url = require("url"),
@@ -99,6 +97,7 @@ server.use(connect.static(__dirname + '/static'));
 server.use(connect.static(__dirname + '/uploads'));
 
 
+var PORT = process.env.PORT
 server.listen(PORT);
 console.log("now connected and listening on "+ PORT);
 
