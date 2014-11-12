@@ -6,7 +6,7 @@ html
 
   body
     div#content
-  
+
         ul(id= "wall-" + wall.id).wall
           if wall.cards.length > 0
             each card in wall.cards
@@ -15,13 +15,13 @@ html
                   img(src= card.imagePath)
                 else
                   textarea= card.title
-        
+
         p <a id="newCard" href="#">+</a> Cards below are private; Cards above are public. Drag cards from below to above to share. (<a href="#" id="reconnect">reconnect</a>)
 
         ul#hand
-        
+
         input(id="upload", type= "file", name= "upload")
-        
+
 
 
     // Scripts at the bottom
